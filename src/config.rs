@@ -8,7 +8,16 @@ use toml::from_str;
 #[derive(Deserialize)]
 pub struct Config {
     pub bind_to: String,
-    pub pg_url: String,
+    pub pg: PG,
+}
+
+/**
+ * PostgreSQL config options.
+ */
+#[derive(Deserialize)]
+pub struct PG {
+    pub url: String,
+    pub max_connections: u32
 }
 
 impl Config {

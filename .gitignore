@@ -2,3 +2,5 @@
 /.env
 /config.toml
 /dev_data
+# For development only
+/docker-compose.yml
