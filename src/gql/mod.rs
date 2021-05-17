@@ -1,4 +1,3 @@
-pub mod handlers;
 mod mutation;
 mod query;
 mod subscription;
@@ -12,6 +11,5 @@ pub fn build_schema() -> DiaSchema {
         .data(())
         .extension(ApolloTracing)
         .extension(Analyzer)
-        .extension(Tracing)
         .finish()
 }

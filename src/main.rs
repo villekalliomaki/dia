@@ -1,18 +1,46 @@
+#![forbid(unsafe_code)]
+
 mod config;
-mod ctx;
 mod db;
 mod gql;
-mod handlers;
+mod logging;
+mod models;
 mod res;
 mod routes;
-mod server;
 
-#[tokio::main]
-async fn main() {
+use crate::{
+    config::Config,
+    db::{redis::create_redis_client, sqlx::create_sqlx_pool},
+    gql::build_schema,
+};
+use actix_web::{App, HttpServer};
+use std::net::SocketAddr;
+
+const CONF_FILE: &str = "./config.toml";
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
     // Initialize logging
-    env_logger::init();
+    logging::setup();
 
-    log::info!("Starting DIA");
+    // Application data, database clients
+    let conf = Config::from_file(CONF_FILE);
+    let pg = create_sqlx_pool(&conf).await;
+    let rd = create_redis_client(&conf);
+    let schema = build_schema();
 
-    server::run().await;
+    // Parse address and port to bind to
+    let addr: SocketAddr = conf.bind_to.parse().unwrap();
+
+    HttpServer::new(move || {
+        App::new()
+            .data(conf.clone())
+            .data(schema.clone())
+            .data(pg.clone())
+            .data(rd.clone())
+            .service(routes::build())
+    })
+    .bind(addr)?
+    .run()
+    .await
 }

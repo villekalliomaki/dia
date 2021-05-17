@@ -5,19 +5,28 @@ use toml::from_str;
 /**
  * App configuration. All fields must exists in the file.
  */
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Config {
     pub bind_to: String,
     pub pg: PG,
+    pub rd: RD,
 }
 
 /**
  * PostgreSQL config options.
  */
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct PG {
     pub url: String,
-    pub max_connections: u32
+    pub max_connections: u32,
+}
+
+/**
+ * Redis client configuration.
+ */
+#[derive(Deserialize, Clone)]
+pub struct RD {
+    pub url: String,
 }
 
 impl Config {
