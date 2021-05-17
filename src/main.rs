@@ -16,7 +16,7 @@ use crate::{
 use actix_web::{App, HttpServer};
 use std::net::SocketAddr;
 
-const CONF_FILE: &str = "./config.toml";
+pub const CONF_FILE: &str = "./config.toml";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

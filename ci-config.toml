@@ -1,0 +1,8 @@
+bind_to = "127.0.0.1:8080"
+
+[pg]
+max_connections = 10
+url = "postgresql://dia:dia@postgres:5432/dia"
+
+[rd]
+url = "redis://redis"
