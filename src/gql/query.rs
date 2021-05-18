@@ -1,16 +1,5 @@
+use crate::models::{Ping, Add};
 use async_graphql::*;
 
-pub struct Query;
-
-#[Object]
-impl Query {
-    /// Returns the sum of a and b
-    async fn add(&self, a: i32, b: i32) -> i32 {
-        a + b
-    }
-
-    /// For testing API reachability
-    async fn ping(&self) -> &'static str {
-        "pong"
-    }
-}
+#[derive(MergedObject, Default)]
+pub struct Query(Ping, Add);

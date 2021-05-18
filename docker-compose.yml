@@ -1,0 +1,17 @@
+# Currently for local development
+
+services:
+    postgres:
+        image: postgres
+        environment:
+            - POSTGRES_PASSWORD=password # Set a password and update config.toml [pg] url section
+            - POSTGRES_USER=dia
+            - POSTGRES_DB=dia
+        volumes:
+            - ./dev_data/pg:/var/lib/postgresql/data
+        ports:
+            - 5432:5432
+    redis:
+        image: redis
+        ports:
+            - 6379:6379
