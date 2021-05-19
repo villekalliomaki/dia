@@ -1,0 +1,24 @@
+name: Build aarch64
+
+on: [push]
+
+jobs:
+    linux_aarch64:
+        name: Linux aarch64
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
+                  target: aarch64-unknown-linux-musl
+                  override: true
+            - uses: actions-rs/cargo@v1
+              with:
+                  use-cross: true
+                  command: build
+                  args: --target aarch64-unknown-linux-musl --release
+            - uses: actions/upload-artifact@v2
+              with:
+                  name: my-artifact
+                  path: target/aarch64-unknown-linux-musl/dia
