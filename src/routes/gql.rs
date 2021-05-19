@@ -1,10 +1,12 @@
-use crate::gql::DiaSchema;
+use crate::{config::Config, gql::DiaSchema};
 use actix_web::{guard, web, HttpRequest, HttpResponse, Result, Scope};
 use async_graphql::{
     http::{playground_source, GraphQLPlaygroundConfig},
     Schema,
 };
 use async_graphql_actix_web::{Request, Response, WSSubscription};
+use redis::Client;
+use sqlx::{Pool, Postgres};
 
 /**
  * Build GQL routes, currently POST for queries and WS, GET for the playground.
@@ -25,8 +27,20 @@ pub fn build() -> Scope {
 /**
  * Normal GraphQL queries as POST requests.
  */
-async fn index(schema: web::Data<DiaSchema>, req: Request) -> Response {
-    schema.execute(req.into_inner()).await.into()
+async fn index(
+    schema: web::Data<DiaSchema>,
+    req: Request,
+    pg: web::Data<Pool<Postgres>>,
+    rd: web::Data<Client>,
+    cfg: web::Data<Config>,
+) -> Response {
+    let mut request = req.into_inner();
+
+    request = request.data(pg);
+    request = request.data(rd);
+    request = request.data(cfg);
+
+    schema.execute(request).await.into()
 }
 
 /**
@@ -36,6 +50,9 @@ async fn ws(
     schema: web::Data<DiaSchema>,
     req: HttpRequest,
     payload: web::Payload,
+    pg: web::Data<Pool<Postgres>>,
+    rd: web::Data<Client>,
+    cfg: web::Data<Config>,
 ) -> Result<HttpResponse> {
     WSSubscription::start(Schema::clone(&*schema), &req, payload)
 }
