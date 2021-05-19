@@ -21,4 +21,4 @@ jobs:
             - uses: actions/upload-artifact@v2
               with:
                   name: my-artifact
-                  path: target/aarch64-unknown-linux-musl/dia
+                  path: target/aarch64-unknown-linux-musl/release/dia
