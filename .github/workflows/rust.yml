@@ -34,8 +34,9 @@ jobs:
         run: cargo install sqlx-cli
       - name: Run Postgres migrations
         run: sqlx migrate run
-      - name: Run tests
-        run: cargo test --verbose
+      - name: Build
+        run: cargo build
+
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -61,9 +62,11 @@ jobs:
         run: sqlx migrate run
       - name: Run tests
         run: cargo test --verbose
+
   build_aarch64:
     name: Build aarch64
     runs-on: ubuntu-latest
+    container: rust
 
     services:
       postgres:
@@ -75,6 +78,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Setup CI config
+        run: mv ci-config.toml config.toml
+      - name: Install sqlx-cli
+        run: cargo install sqlx-cli
+      - name: Run Postgres migrations
+        run: sqlx migrate run
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
