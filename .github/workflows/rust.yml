@@ -10,11 +10,6 @@ env:
   CARGO_TERM_COLOR: always
   DATABASE_URL: postgresql://dia:dia@postgres:5432/dia
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    container: rust
-
     services:
       postgres:
         image: postgres
@@ -24,6 +19,25 @@ jobs:
           POSTGRES_DB: dia
       redis:
         image: redis
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: rust
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup CI config
+        run: mv ci-config.toml config.toml
+      - name: Install sqlx-cli
+        run: cargo install sqlx-cli
+      - name: Run Postgres migrations
+        run: sqlx migrate run
+      - name: Run tests
+        run: cargo test --verbose
+  test:
+    runs-on: ubuntu-latest
+    container: rust
 
     steps:
       - uses: actions/checkout@v2

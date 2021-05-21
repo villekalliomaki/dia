@@ -26,6 +26,7 @@ impl RedisConn {
     /**
      * Create a normal syncronous connection. Safe to use in handlers and such.
      */
+    #[allow(dead_code)]
     pub fn conn(&self) -> Result<Connection, RedisError> {
         self.0.get_connection()
     }
@@ -33,6 +34,7 @@ impl RedisConn {
     /**
      * Get an asyncronous connection safely.
      */
+    #[allow(dead_code)]
     pub async fn conn_async(&self) -> Result<aio::Connection, RedisError> {
         self.0.get_async_connection().await
     }

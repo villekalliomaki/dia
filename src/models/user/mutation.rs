@@ -1,5 +1,4 @@
 use super::User;
-use anyhow::{anyhow, bail};
 use async_graphql::*;
 
 /// A new user with an optional email address.
