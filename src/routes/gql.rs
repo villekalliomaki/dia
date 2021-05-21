@@ -1,4 +1,5 @@
 use crate::{
+    access::ClientIP,
     config::Config,
     db::{RedisConn, SqlxConn},
     gql::DiaSchema,
@@ -35,11 +36,13 @@ async fn index(
     pg: SqlxConn,
     rd: RedisConn,
     cfg: Config,
+    ip: ClientIP,
 ) -> Response {
     let mut request = req.into_inner();
 
     request = request.data(pg.into_inner());
     request = request.data(rd.into_inner());
+    request = request.data(ip.into_inner());
     request = request.data(cfg.clone());
 
     schema.execute(request).await.into()

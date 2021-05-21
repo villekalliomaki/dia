@@ -1,33 +1,33 @@
 name: Test
 
 on:
-    push:
-        branches: [master]
-    pull_request:
-        branches: [master]
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
 
 env:
-    CARGO_TERM_COLOR: always
-    DATABASE_URL: postgresql://dia:dia@postgres:5432/dia
+  CARGO_TERM_COLOR: always
+  DATABASE_URL: postgresql://dia:dia@postgres:5432/dia
 
 jobs:
-    test:
-        runs-on: ubuntu-latest
-        container: rust
+  test:
+    runs-on: ubuntu-latest
+    container: rust
 
-        services:
-            postgres:
-                image: postgres
-                env:
-                    POSTGRES_PASSWORD: dia
-                    POSTGRES_USER: dia
-                    POSTGRES_DB: dia
-            redis:
-                image: redis
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: dia
+          POSTGRES_USER: dia
+          POSTGRES_DB: dia
+      redis:
+        image: redis
 
-        steps:
-            - uses: actions/checkout@v2
-            - name: Setup CI config
-              run: mv ci-config.toml config.toml
-            - name: Run tests
-              run: cargo test --verbose
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup CI config
+        run: mv ci-config.toml config.toml
+      - name: Run tests
+        run: cargo test --verbose

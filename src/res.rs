@@ -1,7 +1,10 @@
 use actix_web::{http::StatusCode, Error, HttpRequest, HttpResponse, Responder, ResponseError};
 use futures::future::{ready, Ready};
 use serde::Serialize;
-use std::{convert::TryInto, fmt::Display};
+use std::{
+    convert::TryInto,
+    fmt::{self, Debug, Display, Formatter},
+};
 
 /**
  * General response format for other than GQL responses.
@@ -12,7 +15,7 @@ use std::{convert::TryInto, fmt::Display};
 #[derive(Debug)]
 pub struct Res<D>
 where
-    D: Serialize,
+    D: Serialize + Debug,
 {
     status_code: StatusCode,
     body: Body<D>,
@@ -20,7 +23,7 @@ where
 
 impl<D> Res<D>
 where
-    D: Serialize,
+    D: Serialize + Debug,
 {
     /**
      * New response, no data, `State::Ok` and status code 200.
@@ -102,7 +105,7 @@ where
     /**
      * Convert self to a `HttpResponse`.
      */
-    pub fn to_response(self) -> HttpResponse {
+    pub fn to_response(&self) -> HttpResponse {
         let body = serde_json::to_string(&self.body).unwrap();
 
         HttpResponse::Ok()
@@ -115,7 +118,7 @@ where
 #[derive(Serialize, Debug)]
 struct Body<D>
 where
-    D: Serialize,
+    D: Serialize + Debug,
 {
     state: State,
     message: String,
@@ -134,7 +137,7 @@ enum State {
  */
 impl<D> Responder for Res<D>
 where
-    D: Serialize,
+    D: Serialize + Debug,
 {
     type Error = Error;
     type Future = Ready<Result<HttpResponse, Error>>;
@@ -144,9 +147,18 @@ where
     }
 }
 
+impl<D> Display for Res<D>
+where
+    D: Serialize + Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:#?}", self)
+    }
+}
+
 impl<D> ResponseError for Res<D>
 where
-    D: Serialize + Display,
+    D: Serialize + Debug,
 {
     fn status_code(&self) -> StatusCode {
         self.status_code
