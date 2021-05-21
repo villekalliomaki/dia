@@ -4,4 +4,4 @@ mod user;
 
 pub use add::Add;
 pub use ping::Ping;
-pub use user::UserQuery;
+pub use user::{UserMutation, UserQuery};

@@ -379,6 +379,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.40"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28b2cd92db5cbd74e8e5028f7e27dd7aa3090e89e4f2a197cc7c8dfb69c7063b"
+
+[[package]]
 name = "arrayvec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1073,6 +1079,7 @@ version = "0.1.1"
 dependencies = [
  "actix-rt 2.2.0",
  "actix-web",
+ "anyhow",
  "async-graphql",
  "async-graphql-actix-web",
  "chrono",
@@ -2627,6 +2634,7 @@ dependencies = [
  "bitflags",
  "byteorder",
  "bytes 0.5.6",
+ "chrono",
  "crc",
  "crossbeam-channel 0.5.1",
  "crossbeam-queue",

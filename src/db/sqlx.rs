@@ -1,63 +1,86 @@
 use crate::config::Config;
+use actix_web::{dev::Payload, FromRequest, HttpRequest};
+use futures::future::{err, ok, Ready};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 
 /**
- * Create a Sqlx pool. Only supports PostgreSQL currently. Panics if fails.
+ * Sqlx pool wrapper, since you can't implement traits on foreign structs.
  */
-pub async fn create_sqlx_pool(conf: &Config) -> PgPool {
-    log::info!(
-        "Creating SQLX pool with {} connections",
-        conf.pg.max_connections
-    );
+#[derive(Clone)]
+pub struct SqlxConn(PgPool);
 
-    let pool = PgPoolOptions::new()
-        .max_connections(conf.pg.max_connections)
-        .connect(&conf.pg.url)
-        .await
-        .unwrap();
+impl SqlxConn {
+    /**
+     * Create a pool from a config. Can panic.
+     */
+    pub async fn new(conf: &Config) -> Self {
+        log::info!(
+            "Creating SQLX pool with {} connections",
+            conf.pg.max_connections
+        );
 
-    migrate(&pool).await;
+        let pool = PgPoolOptions::new()
+            .max_connections(conf.pg.max_connections)
+            .connect(&conf.pg.url)
+            .await
+            .unwrap();
 
-    pool
+        SqlxConn(pool)
+    }
+
+    /**
+     * Run migrations from ./migrations, panics on failure.
+     */
+    pub async fn migrate(&self) {
+        log::info!("Running SQLX migrations");
+
+        sqlx::migrate!("./migrations").run(&self.0).await.unwrap();
+    }
+
+    pub fn into_inner(self) -> PgPool {
+        self.0
+    }
 }
 
-/**
- * Run migrations in the speficied directory. Can panic on failure.
- */
-pub async fn migrate(pool: &PgPool) {
-    log::info!("Running SQLX migrations");
+impl FromRequest for SqlxConn {
+    type Error = ();
+    type Future = Ready<Result<Self, Self::Error>>;
+    type Config = ();
 
-    sqlx::migrate!("./migrations").run(pool).await.unwrap();
+    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
+        match req.app_data::<SqlxConn>() {
+            Some(conn) => ok(conn.clone()),
+            _ => {
+                log::error!("SqlxConn does not exists in app's data!");
+
+                err(())
+            }
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::CONF_FILE;
-
-    async fn test_pool() -> PgPool {
-        create_sqlx_pool(&Config::from_file(CONF_FILE)).await
-    }
+    use crate::{config::Config, CONF_FILE};
 
     #[tokio::test]
     /**
-     * Test pool creation and connectivity.
+     * Mainly for testing the configuration.
      */
-    async fn sqlx_pool() {
-        let row: (i64,) = sqlx::query_as("SELECT $1")
-            .bind(1_i64)
-            .fetch_one(&test_pool().await)
-            .await
-            .unwrap();
+    async fn create_sqlx_conn() {
+        let conf = &Config::from_file(CONF_FILE);
 
-        assert_eq!(row.0, 1);
+        SqlxConn::new(conf).await;
     }
 
     #[tokio::test]
     /**
-     * Test running migrations.
+     * Test migrations.
      */
     async fn sqlx_migrations() {
-        migrate(&test_pool().await).await
+        let conf = &Config::from_file(CONF_FILE);
+
+        SqlxConn::new(conf).await.migrate().await;
     }
 }

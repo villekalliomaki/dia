@@ -1,3 +1,5 @@
+use actix_web::{dev::Payload, FromRequest, HttpRequest};
+use futures::future::{err, ok, Ready};
 use serde::Deserialize;
 use std::fs::read_to_string;
 use toml::from_str;
@@ -36,5 +38,22 @@ impl Config {
      */
     pub fn from_file(path: &'static str) -> Config {
         from_str::<Config>(&read_to_string(path).unwrap()).unwrap()
+    }
+}
+
+impl FromRequest for Config {
+    type Error = ();
+    type Future = Ready<Result<Self, Self::Error>>;
+    type Config = ();
+
+    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
+        match req.app_data::<Config>() {
+            Some(conf) => ok(conf.clone()),
+            _ => {
+                log::error!("Config does not exists in app's data!");
+
+                err(())
+            }
+        }
     }
 }

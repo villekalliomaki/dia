@@ -1,7 +1,7 @@
-use actix_web::{http::StatusCode, Error, HttpRequest, HttpResponse, Responder};
+use actix_web::{http::StatusCode, Error, HttpRequest, HttpResponse, Responder, ResponseError};
 use futures::future::{ready, Ready};
 use serde::Serialize;
-use std::convert::TryInto;
+use std::{convert::TryInto, fmt::Display};
 
 /**
  * General response format for other than GQL responses.
@@ -9,6 +9,7 @@ use std::convert::TryInto;
  * Since associated functions "consume" the instance,
  * this is best used at the return line.
  */
+#[derive(Debug)]
 pub struct Res<D>
 where
     D: Serialize,
@@ -111,7 +112,7 @@ where
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 struct Body<D>
 where
     D: Serialize,
@@ -140,6 +141,18 @@ where
 
     fn respond_to(self, _req: &HttpRequest) -> Self::Future {
         ready(Ok(self.to_response()))
+    }
+}
+
+impl<D> ResponseError for Res<D>
+where
+    D: Serialize + Display,
+{
+    fn status_code(&self) -> StatusCode {
+        self.status_code
+    }
+    fn error_response(&self) -> HttpResponse {
+        self.to_response()
     }
 }
 

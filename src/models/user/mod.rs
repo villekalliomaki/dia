@@ -1,11 +1,16 @@
+mod mutation;
+mod query;
+
+pub use mutation::UserMutation;
+pub use query::UserQuery;
+
+use anyhow::{bail, Result};
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use sodiumoxide::crypto::pwhash::argon2id13;
-use std::time::Instant;
-use tokio::task::spawn_blocking;
 use uuid::Uuid;
 
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Clone)]
 pub struct User {
     id: Uuid,
     created: DateTime<Utc>,
@@ -24,7 +29,7 @@ impl User {
      * If used in an asyncronous context, `spawn_blocking` should be used,
      * since task is CPU intensive.
      */
-    pub fn hash_password<S: Into<String>>(new_password: S) -> Result<String, Error> {
+    pub fn hash_password<S: Into<String>>(new_password: S) -> Result<String> {
         sodiumoxide::init().unwrap();
 
         let hashed = match argon2id13::pwhash(
@@ -33,20 +38,20 @@ impl User {
             argon2id13::MEMLIMIT_INTERACTIVE,
         ) {
             Ok(h) => h,
-            Err(()) => return Err(Error::new("Failed to hash password.")),
+            Err(()) => bail!("Failed to hash password."),
         };
 
-        match std::str::from_utf8(&hashed.0) {
-            Ok(s) => Ok(s.trim_end_matches('\u{0}').to_string()),
-            Err(err) => Err(Error::new(format!("Failed to convert to utf-8: {}", err))),
-        }
+        Ok(std::str::from_utf8(&hashed.0)?
+            .trim_end_matches('\u{0}')
+            .to_string())
     }
 
     /**
      * Tests the password against current users hash.
      * Returns `true` on a match and `false` if the password is wrong.
+     * Usage with `spawn_blocking` is preferred.
      */
-    pub fn validate_password<S: Into<String>>(&self, password: S) -> bool {
+    pub fn validate_password<S: Into<String>>(&self, password: S) -> Result<bool> {
         sodiumoxide::init().unwrap();
 
         let mut hash_padded = [0u8; 128];
@@ -59,30 +64,9 @@ impl User {
             });
 
         match argon2id13::HashedPassword::from_slice(&hash_padded) {
-            Some(hp) => argon2id13::pwhash_verify(&hp, password.into().as_bytes()),
-            _ => false,
+            Some(hp) => Ok(argon2id13::pwhash_verify(&hp, password.into().as_bytes())),
+            _ => bail!("Password was invalid"),
         }
-    }
-}
-
-#[derive(Default)]
-pub struct UserQuery;
-
-#[Object]
-impl UserQuery {
-    async fn test_user(&self, ctx: &Context<'_>) -> Result<User> {
-        let sqlx = ctx.data::<sqlx::PgConnection>()?;
-
-        Ok(User {
-            id: uuid::Uuid::new_v4(),
-            created: Utc::now(),
-            modified: Utc::now(),
-            username: "username".to_string(),
-            email: None,
-            display_name: None,
-            password_hash: "password".to_string(),
-            groups: vec!["users".to_string()],
-        })
     }
 }
 
@@ -107,13 +91,13 @@ mod tests {
     fn user_password_valid() {
         let user = test_user();
 
-        assert_eq!(user.validate_password("a_password"), true);
+        assert_eq!(user.validate_password("a_password").unwrap(), true);
     }
 
     #[test]
     fn user_password_invalid() {
         let user = test_user();
 
-        assert_eq!(user.validate_password("wrong_password"), false);
+        assert_eq!(user.validate_password("wrong_password").unwrap(), false);
     }
 }

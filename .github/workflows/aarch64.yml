@@ -20,5 +20,5 @@ jobs:
                   args: --target aarch64-unknown-linux-musl --release
             - uses: actions/upload-artifact@v2
               with:
-                  name: my-artifact
+                  name: dia-aarch64
                   path: target/aarch64-unknown-linux-musl/release/dia
