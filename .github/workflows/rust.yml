@@ -10,15 +10,15 @@ env:
   CARGO_TERM_COLOR: always
   DATABASE_URL: postgresql://dia:dia@postgres:5432/dia
 
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: dia
-          POSTGRES_USER: dia
-          POSTGRES_DB: dia
-      redis:
-        image: redis
+services:
+  postgres:
+    image: postgres
+    env:
+      POSTGRES_PASSWORD: dia
+      POSTGRES_USER: dia
+      POSTGRES_DB: dia
+  redis:
+    image: redis
 
 jobs:
   build:
