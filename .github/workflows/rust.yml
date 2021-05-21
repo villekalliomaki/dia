@@ -12,6 +12,7 @@ env:
 
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
     container: rust
 
@@ -36,6 +37,7 @@ jobs:
       - name: Run tests
         run: cargo test --verbose
   test:
+    name: Test
     runs-on: ubuntu-latest
     container: rust
 
@@ -59,3 +61,31 @@ jobs:
         run: sqlx migrate run
       - name: Run tests
         run: cargo test --verbose
+  build_aarch64:
+    name: Build aarch64
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: dia
+          POSTGRES_USER: dia
+          POSTGRES_DB: dia
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: aarch64-unknown-linux-musl
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --target aarch64-unknown-linux-musl --release
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dia-aarch64
+          path: target/aarch64-unknown-linux-musl/release/dia
