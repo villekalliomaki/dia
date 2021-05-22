@@ -74,6 +74,8 @@ jobs:
           POSTGRES_PASSWORD: dia
           POSTGRES_USER: dia
           POSTGRES_DB: dia
+      redis:
+        image: redis
 
     steps:
       - uses: actions/checkout@v2
@@ -85,10 +87,10 @@ jobs:
           target: aarch64-unknown-linux-musl
           override: true
       - uses: actions-rs/cargo@v1
-      - name: Install sqlx-cli
-        run: cargo install sqlx-cli
-      - name: Run Postgres migrations
-        run: sqlx migrate run
+        with:
+          command: install
+          args: sqlx-cli
+      - run: sqlx migrate run
       - uses: actions-rs/cargo@v1
         with:
           use-cross: true
