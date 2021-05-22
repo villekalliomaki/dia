@@ -66,7 +66,6 @@ jobs:
   build_aarch64:
     name: Build aarch64
     runs-on: ubuntu-latest
-    container: rust
 
     services:
       postgres:
@@ -80,15 +79,16 @@ jobs:
       - uses: actions/checkout@v2
       - name: Setup CI config
         run: mv ci-config.toml config.toml
-      - name: Install sqlx-cli
-        run: cargo install sqlx-cli
-      - name: Run Postgres migrations
-        run: sqlx migrate run
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: aarch64-unknown-linux-musl
           override: true
+      - uses: actions-rs/cargo@v1
+      - name: Install sqlx-cli
+        run: cargo install sqlx-cli
+      - name: Run Postgres migrations
+        run: sqlx migrate run
       - uses: actions-rs/cargo@v1
         with:
           use-cross: true
