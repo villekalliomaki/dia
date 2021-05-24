@@ -3,15 +3,13 @@ use futures::future::{ready, Ready};
 use serde::Serialize;
 use std::{
     convert::TryInto,
-    fmt::{self, Debug, Display, Formatter},
+    fmt::{self, Debug, Display},
 };
 
-/**
- * General response format for other than GQL responses.
- * Supports a single generic data type, which must implement `serde::Serialize`.
- * Since associated functions "consume" the instance,
- * this is best used at the return line.
- */
+/// General response format for other than GQL responses.
+/// Supports a single generic data type, which must implement `serde::Serialize`.
+/// Since associated functions "consume" the instance,
+/// this is best used at the return line.
 #[derive(Debug)]
 pub struct Res<D>
 where
@@ -25,9 +23,7 @@ impl<D> Res<D>
 where
     D: Serialize + Debug,
 {
-    /**
-     * New response, no data, `State::Ok` and status code 200.
-     */
+    /// New response, no data, `State::Ok` and status code 200.
     pub fn new() -> Res<D> {
         Res {
             status_code: StatusCode::OK,
@@ -39,11 +35,9 @@ where
         }
     }
 
-    /**
-     * Response with an Ok -state and 200 HTTP status.
-     * Data is expected to be included.
-     * If no data it required, set it to and empty tuple: `()`.
-     */
+    /// Response with an Ok -state and 200 HTTP status.
+    /// Data is expected to be included.
+    /// If no data it required, set it to and empty tuple: `()`.
     pub fn ok<S: Into<String>>(msg: S, data: D) -> Res<D> {
         Res {
             status_code: StatusCode::OK,
@@ -55,9 +49,7 @@ where
         }
     }
 
-    /**
-     * Response where data might be included,
-     */
+    /// Response where data might be included,
     pub fn info<S: Into<String>>(msg: S, data: Option<D>) -> Res<D> {
         Res {
             status_code: StatusCode::OK,
@@ -69,9 +61,7 @@ where
         }
     }
 
-    /**
-     * An error reponse with no data. Defaults to HTTP status 400, and should be changed if needed.
-     */
+    /// An error reponse with no data. Defaults to HTTP status 400, and should be changed if needed.
     pub fn error<S: Into<String>>(msg: S) -> Res<()> {
         Res {
             status_code: StatusCode::BAD_REQUEST,
@@ -83,17 +73,13 @@ where
         }
     }
 
-    /**
-     * Set the data again. Must be of the same type.
-     */
+    /// Set the data again. Must be of the same type.
     pub fn data(mut self, data: Option<D>) -> Self {
         self.body.data = data;
         self
     }
 
-    /**
-     * Set the status code. If the status code is not valid, does not change it.
-     */
+    /// Set the status code. If the status code is not valid, does not change it.
     pub fn status<C: TryInto<StatusCode>>(mut self, status: C) -> Res<D> {
         if let Ok(value) = status.try_into() {
             self.status_code = value;
@@ -102,9 +88,7 @@ where
         self
     }
 
-    /**
-     * Convert self to a `HttpResponse`.
-     */
+    /// Convert self to a `HttpResponse`.
     pub fn to_response(&self) -> HttpResponse {
         let body = serde_json::to_string(&self.body).unwrap();
 
@@ -132,9 +116,7 @@ enum State {
     Error,
 }
 
-/**
- * Implement actix-web's Responder -trait, so Res can be directly returned from handlers.
- */
+/// Implement actix-web's Responder -trait, so Res can be directly returned from handlers.
 impl<D> Responder for Res<D>
 where
     D: Serialize + Debug,

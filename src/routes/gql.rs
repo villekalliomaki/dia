@@ -1,8 +1,8 @@
 use crate::{
-    access::ClientIP,
-    config::Config,
+    access::{ClientIP, RateLimiter},
     db::{RedisConn, SqlxConn},
     gql::DiaSchema,
+    Config,
 };
 use actix_web::{guard, web, HttpRequest, HttpResponse, Result, Scope};
 use async_graphql::{
@@ -11,9 +11,7 @@ use async_graphql::{
 };
 use async_graphql_actix_web::{Request, Response, WSSubscription};
 
-/**
- * Build GQL routes, currently POST for queries and WS, GET for the playground.
- */
+/// Build GQL routes, currently POST for queries and WS, GET for the playground.
 pub fn build() -> Scope {
     web::scope("/gql")
         .route("", web::post().to(index))
@@ -27,9 +25,7 @@ pub fn build() -> Scope {
         .route("/sdl", web::get().to(sdl))
 }
 
-/**
- * Normal GraphQL queries as POST requests.
- */
+/// Normal GraphQL queries as POST requests.
 async fn index(
     schema: web::Data<DiaSchema>,
     req: Request,
@@ -37,6 +33,7 @@ async fn index(
     rd: RedisConn,
     cfg: Config,
     ip: ClientIP,
+    rl: RateLimiter,
 ) -> Response {
     let mut request = req.into_inner();
 
@@ -44,13 +41,12 @@ async fn index(
     request = request.data(rd.into_inner());
     request = request.data(ip.into_inner());
     request = request.data(cfg.clone());
+    request = request.data(rl.clone());
 
     schema.execute(request).await.into()
 }
 
-/**
- * Websocket queries and subscriptions.
- */
+/// Websocket queries and subscriptions.
 async fn ws(
     schema: web::Data<DiaSchema>,
     req: HttpRequest,
@@ -58,13 +54,12 @@ async fn ws(
     _pg: SqlxConn,
     _rd: RedisConn,
     _cfg: Config,
+    _rl: RateLimiter,
 ) -> Result<HttpResponse> {
     WSSubscription::start(Schema::clone(&*schema), &req, payload)
 }
 
-/**
- * Load a static playground.
- */
+/// Load a static playground.
 async fn playground() -> HttpResponse {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
@@ -73,9 +68,7 @@ async fn playground() -> HttpResponse {
         ))
 }
 
-/**
- * Server the schema definition as text.
- */
+/// Server the schema definition as text.
 async fn sdl(schema: web::Data<DiaSchema>) -> HttpResponse {
     HttpResponse::Ok().body(schema.sdl())
 }

@@ -1,6 +1,7 @@
 mod add;
 mod ping;
-mod user;
+pub mod refresh_token;
+pub mod user;
 
 pub use add::Add;
 pub use ping::Ping;

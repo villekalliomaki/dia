@@ -1,20 +1,16 @@
-use crate::config::Config;
+use crate::{Config, Res};
 use actix_web::{dev::Payload, FromRequest, HttpRequest};
 use futures::future::{err, ok, Ready};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 
-/**
- * Sqlx pool wrapper, since you can't implement traits on foreign structs.
- */
+/// Sqlx pool wrapper, since you can't implement traits on foreign structs.
 #[derive(Clone)]
 pub struct SqlxConn(PgPool);
 
 impl SqlxConn {
-    /**
-     * Create a pool from a config. Can panic.
-     */
+    /// Create a pool from a config. Can panic.
     pub async fn new(conf: &Config) -> Self {
-        log::info!(
+        info!(
             "Creating SQLX pool with {} connections",
             conf.pg.max_connections
         );
@@ -28,11 +24,9 @@ impl SqlxConn {
         SqlxConn(pool)
     }
 
-    /**
-     * Run migrations from ./migrations, panics on failure.
-     */
+    /// Run migrations from ./migrations, panics on failure.
     pub async fn migrate(&self) {
-        log::info!("Running SQLX migrations");
+        info!("Running SQLX migrations");
 
         sqlx::migrate!("./migrations").run(&self.0).await.unwrap();
     }
@@ -43,7 +37,7 @@ impl SqlxConn {
 }
 
 impl FromRequest for SqlxConn {
-    type Error = ();
+    type Error = Res<()>;
     type Future = Ready<Result<Self, Self::Error>>;
     type Config = ();
 
@@ -51,9 +45,9 @@ impl FromRequest for SqlxConn {
         match req.app_data::<SqlxConn>() {
             Some(conn) => ok(conn.clone()),
             _ => {
-                log::error!("SqlxConn does not exists in app's data!");
+                error!("SqlxConn does not exists in app's data!");
 
-                err(())
+                err(Res::<()>::error("No SqlxConn in app's data"))
             }
         }
     }
@@ -65,9 +59,7 @@ mod tests {
     use crate::{config::Config, CONF_FILE};
 
     #[tokio::test]
-    /**
-     * Mainly for testing the configuration.
-     */
+    /// Mainly for testing the configuration.
     async fn create_sqlx_conn() {
         let conf = &Config::from_file(CONF_FILE);
 
@@ -75,9 +67,7 @@ mod tests {
     }
 
     #[tokio::test]
-    /**
-     * Test migrations.
-     */
+    /// Test migrations.
     async fn sqlx_migrations() {
         let conf = &Config::from_file(CONF_FILE);
 

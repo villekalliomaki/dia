@@ -4,7 +4,7 @@ services:
     postgres:
         image: postgres
         environment:
-            - POSTGRES_PASSWORD=password # Set a password and update config.toml [pg] url section
+            - POSTGRES_PASSWORD=dia # Set a password and update config.toml [pg] url section
             - POSTGRES_USER=dia
             - POSTGRES_DB=dia
         volumes:

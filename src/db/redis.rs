@@ -1,20 +1,16 @@
-use crate::config::Config;
+use crate::{Config, Res};
 use actix_web::{dev::Payload, FromRequest, HttpRequest};
 use futures::future::{err, ok, Ready};
 use redis::{aio, Client, Connection, RedisError};
 
-/**
- * Wrapper for the redis client.
- */
+/// Wrapper for the redis client.
 #[derive(Clone)]
 pub struct RedisConn(Client);
 
 impl RedisConn {
-    /**
-     * Create a new client, can panic.
-     */
+    /// Create a new client, can panic.
     pub fn new(conf: &Config) -> Self {
-        log::info!("Creating Redis client");
+        info!("Creating Redis client");
 
         RedisConn(Client::open(conf.rd.url.as_str()).unwrap())
     }
@@ -23,17 +19,13 @@ impl RedisConn {
         self.0
     }
 
-    /**
-     * Create a normal syncronous connection. Safe to use in handlers and such.
-     */
+    /// Create a normal syncronous connection. Safe to use in handlers and such.
     #[allow(dead_code)]
     pub fn conn(&self) -> Result<Connection, RedisError> {
         self.0.get_connection()
     }
 
-    /**
-     * Get an asyncronous connection safely.
-     */
+    /// Get an asyncronous connection safely.
     #[allow(dead_code)]
     pub async fn conn_async(&self) -> Result<aio::Connection, RedisError> {
         self.0.get_async_connection().await
@@ -41,7 +33,7 @@ impl RedisConn {
 }
 
 impl FromRequest for RedisConn {
-    type Error = ();
+    type Error = Res<()>;
     type Future = Ready<Result<Self, Self::Error>>;
     type Config = ();
 
@@ -49,9 +41,9 @@ impl FromRequest for RedisConn {
         match req.app_data::<RedisConn>() {
             Some(conn) => ok(conn.clone()),
             _ => {
-                log::error!("RedisConn does not exists in app's data!");
+                error!("RedisConn does not exists in app's data!");
 
-                err(())
+                err(Res::<()>::error("No RedisConn in app's data"))
             }
         }
     }
@@ -64,9 +56,7 @@ mod tests {
     use redis::AsyncCommands;
 
     #[tokio::test]
-    /**
-     * Test creating and using a redis client. Mainly for testing the configuration.
-     */
+    /// Test creating and using a redis client. Mainly for testing the configuration.
     async fn redis_client() {
         let client = RedisConn::new(&Config::from_file(CONF_FILE));
 

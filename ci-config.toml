@@ -1,4 +1,5 @@
 bind_to = "127.0.0.1:8080"
+allow_registerations = true
 
 [pg]
 max_connections = 10

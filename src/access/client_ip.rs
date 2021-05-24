@@ -1,18 +1,25 @@
 use crate::res::Res;
 use actix_web::{dev::Payload, FromRequest, HttpRequest};
 use futures::future::{err, ok, Ready};
-use std::net::{AddrParseError, IpAddr};
+use std::net::{AddrParseError, IpAddr, SocketAddr};
 
-/**
- * Wrapper type to extract the client address from a request.
- * `Forwarded` and `X-Forwarded-For` should be removed or set by a reverse proxy.
- * If no header is set falls back to the sockets address.
- */
+/// Wrapper type to extract the client address from a request.
+/// `Forwarded` and `X-Forwarded-For` should be removed or set by a reverse proxy.
+/// If no header is set falls back to the sockets address.
 pub struct ClientIP(IpAddr);
 
 impl ClientIP {
     pub fn new(from: &str) -> Result<Self, AddrParseError> {
-        Ok(ClientIP(from.parse()?))
+        Ok(match from.parse::<IpAddr>() {
+            Ok(value) => ClientIP(value),
+            Err(_) => {
+                // Try to parse into a socket address
+                match from.parse::<SocketAddr>() {
+                    Ok(value) => ClientIP(value.ip()),
+                    Err(error) => return Err(error),
+                }
+            }
+        })
     }
 
     pub fn into_inner(self) -> IpAddr {

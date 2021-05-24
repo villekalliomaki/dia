@@ -1,16 +1,18 @@
 mod mutation;
 mod query;
+mod regex;
 
 pub use mutation::UserMutation;
 pub use query::UserQuery;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use async_graphql::*;
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use sodiumoxide::crypto::pwhash::argon2id13;
 use uuid::Uuid;
 
-#[derive(SimpleObject, Clone)]
+#[derive(SimpleObject, Serialize, Deserialize, Clone, Debug)]
 pub struct User {
     id: Uuid,
     created: DateTime<Utc>,
@@ -24,11 +26,9 @@ pub struct User {
 }
 
 impl User {
-    /**
-     * Hash the given password with argon2id13.
-     * If used in an asyncronous context, `spawn_blocking` should be used,
-     * since task is CPU intensive.
-     */
+    /// Hash the given password with argon2id13.
+    /// If used in an asyncronous context, `spawn_blocking` should be used,
+    /// since task is CPU intensive.
     pub fn hash_password<S: Into<String>>(new_password: S) -> Result<String> {
         sodiumoxide::init().unwrap();
 
@@ -46,11 +46,9 @@ impl User {
             .to_string())
     }
 
-    /**
-     * Tests the password against current users hash.
-     * Returns `true` on a match and `false` if the password is wrong.
-     * Usage with `spawn_blocking` is preferred.
-     */
+    /// Tests the password against current users hash.
+    /// Returns `true` on a match and `false` if the password is wrong.
+    /// Usage with `spawn_blocking` is preferred.
     pub fn validate_password<S: Into<String>>(&self, password: S) -> Result<bool> {
         sodiumoxide::init().unwrap();
 

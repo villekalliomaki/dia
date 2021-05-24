@@ -17,9 +17,7 @@ mod tests {
     use crate::gql::build_schema;
 
     #[tokio::test]
-    /**
-     * Simple example for testing GQL queries.
-     */
+    /// Simple example for testing GQL queries.
     async fn add() {
         let s = build_schema();
         let q = Request::new("query { add(a: 1, b: 1) }");

@@ -1,13 +1,14 @@
 # DIA
 
-## Set up environment
+## Set up the environment
 
 ### Prerequisites
 
 - Rust installed
 - Cargo installed
-- PostgreSQL database with credentials
-- Redis (password required for remote instances)
+- If not using docker
+    - PostgreSQL database with credentials
+    - Redis (password required for remote instances)
 
 ### Run containers **(optional)**
 
@@ -27,7 +28,7 @@ DATABASE_URL=postgresql://.../...
 
 ### Create `config.toml`
 
-This is the main application configuration, and the only one used in production. Adjust fields accordindly
+This is the main application configuration, and the only one used in production. Adjust fields accordindly.
 
 ```toml
 bind_to = "127.0.0.1:8080"
