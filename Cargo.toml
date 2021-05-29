@@ -11,14 +11,17 @@ anyhow = "1.0"
 async-graphql = { version = "2", features = ["apollo_tracing", "chrono", "uuid"] }
 async-graphql-actix-web = "2.8.5"
 chrono = { version = "0.4", features = ["serde"] }
+enum-display-derive = "0.1.1"
 env_logger = "0.8.3"
 futures = "0.3.15"
 futures-core = "0.3.15"
 http = "0.2.4"
 hyper = "0.14.7"
-jsonwebtoken = "7"
+jsonwebtoken = "8.0.0-beta.2" # Switch to the release
+lazy_static = "1.4.0"
 log = "0.4.14"
 redis = { version = "0.17.0", features = ["tokio-comp"] }
+regex = "1.5.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
 sodiumoxide = "0.2.6"
@@ -27,5 +30,5 @@ tokio = "0.2.25"
 toml = "0.5.8"
 uuid = "0.8.2"
 validator = { version = "0.13", features = ["derive"] }
-regex = "1.5.4"
-lazy_static = "1.4.0"
+openssl = "0.10"
+base64 = "0.13"

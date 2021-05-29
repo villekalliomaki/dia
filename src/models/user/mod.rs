@@ -14,15 +14,15 @@ use uuid::Uuid;
 
 #[derive(SimpleObject, Serialize, Deserialize, Clone, Debug)]
 pub struct User {
-    id: Uuid,
-    created: DateTime<Utc>,
-    modified: DateTime<Utc>,
-    username: String,
-    email: Option<String>,
-    display_name: Option<String>,
+    pub id: Uuid,
+    pub created: DateTime<Utc>,
+    pub modified: DateTime<Utc>,
+    pub username: String,
+    pub email: Option<String>,
+    pub display_name: Option<String>,
     #[graphql(skip)]
-    password_hash: String,
-    groups: Vec<String>,
+    pub password_hash: String,
+    pub groups: Vec<String>,
 }
 
 impl User {

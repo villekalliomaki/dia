@@ -1,5 +1,5 @@
 use crate::{
-    access::{ClientIP, RateLimiter},
+    access::{ClientIP, RateLimiter, JWT},
     db::{RedisConn, SqlxConn},
     gql::DiaSchema,
     Config,
@@ -7,7 +7,7 @@ use crate::{
 use actix_web::{guard, web, HttpRequest, HttpResponse, Result, Scope};
 use async_graphql::{
     http::{playground_source, GraphQLPlaygroundConfig},
-    Schema,
+    Data, Schema,
 };
 use async_graphql_actix_web::{Request, Response, WSSubscription};
 
@@ -34,14 +34,20 @@ async fn index(
     cfg: Config,
     ip: ClientIP,
     rl: RateLimiter,
+    jwt: JWT,
 ) -> Response {
     let mut request = req.into_inner();
 
-    request = request.data(pg.into_inner());
-    request = request.data(rd.into_inner());
-    request = request.data(ip.into_inner());
-    request = request.data(cfg.clone());
-    request = request.data(rl.clone());
+    let mut data = Data::default();
+
+    data.insert(pg.into_inner());
+    data.insert(rd.into_inner());
+    data.insert(ip.into_inner());
+    data.insert(cfg);
+    data.insert(rl);
+    data.insert(jwt);
+
+    request.data = data;
 
     schema.execute(request).await.into()
 }
@@ -51,12 +57,25 @@ async fn ws(
     schema: web::Data<DiaSchema>,
     req: HttpRequest,
     payload: web::Payload,
-    _pg: SqlxConn,
-    _rd: RedisConn,
-    _cfg: Config,
-    _rl: RateLimiter,
+    pg: SqlxConn,
+    rd: RedisConn,
+    cfg: Config,
+    ip: ClientIP,
+    rl: RateLimiter,
+    jwt: JWT,
 ) -> Result<HttpResponse> {
-    WSSubscription::start(Schema::clone(&*schema), &req, payload)
+    WSSubscription::start_with_initializer(Schema::clone(&*schema), &req, payload, |_| async {
+        let mut data = Data::default();
+
+        data.insert(pg.into_inner());
+        data.insert(rd.into_inner());
+        data.insert(ip.into_inner());
+        data.insert(cfg);
+        data.insert(rl);
+        data.insert(jwt);
+
+        Ok(data)
+    })
 }
 
 /// Load a static playground.

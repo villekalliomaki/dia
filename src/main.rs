@@ -1,7 +1,6 @@
 #![forbid(unsafe_code)]
-
-// Allow dead code and unused imports in non-release builds.
-//#![cfg_attr(debug_assertions, allow(dead_code, unused_imports))]
+// Allow dead code in non-release builds.
+#![cfg_attr(debug_assertions, allow(dead_code))]
 
 #[macro_use]
 extern crate lazy_static;
@@ -11,6 +10,9 @@ extern crate log;
 
 #[macro_use]
 extern crate anyhow;
+
+#[macro_use]
+extern crate enum_display_derive;
 
 mod access;
 mod config;
@@ -24,7 +26,7 @@ mod res;
 mod routes;
 
 use crate::{
-    access::RateLimiter,
+    access::{RateLimiter, JWT},
     db::{RedisConn, SqlxConn},
     gql::build_schema,
 };
@@ -41,12 +43,13 @@ async fn main() -> std::io::Result<()> {
     // Initialize logging
     logging::setup();
 
-    // Application data, database clients
+    // Application data, database clientsmm
     let conf = Config::from_file(CONF_FILE);
     let pg = SqlxConn::new(&conf).await;
     let rd = RedisConn::new(&conf);
     let rl = RateLimiter::new(rd.clone());
     let schema = build_schema();
+    let jwt = JWT::generate().unwrap();
 
     // Run Sqlx migrations
     pg.migrate().await;
@@ -61,6 +64,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(pg.clone())
             .app_data(rd.clone())
             .app_data(rl.clone())
+            .app_data(jwt.clone())
             .service(routes::build())
     })
     .bind(addr)?

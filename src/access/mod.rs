@@ -3,4 +3,5 @@ pub mod jwt;
 mod rate_limiter;
 
 pub use client_ip::ClientIP;
-pub use rate_limiter::RateLimiter;
+pub use jwt::JWT;
+pub use rate_limiter::{Group, Identifier, Limiter, RateLimiter};

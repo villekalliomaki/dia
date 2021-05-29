@@ -1,6 +1,10 @@
 use super::{regex, User};
-use crate::Config;
+use crate::{
+    access::{Identifier, Limiter, RateLimiter},
+    Config,
+};
 use async_graphql::*;
+use std::net::IpAddr;
 use tokio::task::spawn_blocking;
 use validator::Validate;
 
@@ -20,11 +24,20 @@ pub struct UserMutation;
 
 #[Object]
 impl UserMutation {
-    /// Create a new user if registerations are allowed.
+    /// Create a new user if registerations are allowed. Rate limited to 5 tries per hour.
     async fn create_user(&self, ctx: &Context<'_>, new_user: NewUser) -> Result<User> {
         if !ctx.data::<Config>()?.allow_registerations {
             return Err(Error::new("Registerations not allowed"));
         }
+
+        ctx.data::<RateLimiter>()?
+            .run(
+                &Limiter::default(Identifier::Address(ctx.data::<IpAddr>()?.clone()))
+                    .register()
+                    .lifetime_seconds(60 * 60)
+                    .full_count(5),
+            )
+            .await?;
 
         new_user.validate()?;
 

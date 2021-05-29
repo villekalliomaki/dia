@@ -17,7 +17,7 @@ impl SqlxConn {
 
         let pool = PgPoolOptions::new()
             .max_connections(conf.pg.max_connections)
-            .connect(&conf.pg.url)
+            .connect(conf.pg.url.as_str())
             .await
             .unwrap();
 

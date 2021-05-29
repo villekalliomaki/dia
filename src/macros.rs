@@ -5,7 +5,7 @@ macro_rules! gql_test {
     ($query:expr) => {{
         {
             use crate::{
-                access::ClientIP,
+                access::{ClientIP, RateLimiter},
                 db::{RedisConn, SqlxConn},
                 gql::build_schema,
                 Config, CONF_FILE,
@@ -14,8 +14,10 @@ macro_rules! gql_test {
             let conf = Config::from_file(CONF_FILE);
 
             let mut req = Request::new($query);
+            let rd = RedisConn::new(&conf);
 
-            req = req.data(RedisConn::new(&conf).into_inner());
+            req = req.data(RateLimiter::new(rd.clone()));
+            req = req.data(rd.into_inner());
             req = req.data(SqlxConn::new(&conf).await.into_inner());
             req = req.data(ClientIP::new("127.0.0.1").unwrap().into_inner());
             req = req.data(conf);

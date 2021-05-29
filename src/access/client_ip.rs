@@ -5,7 +5,9 @@ use std::net::{AddrParseError, IpAddr, SocketAddr};
 
 /// Wrapper type to extract the client address from a request.
 /// `Forwarded` and `X-Forwarded-For` should be removed or set by a reverse proxy.
-/// If no header is set falls back to the sockets address.
+/// If no header is set, falls back to the sockets address.
+/// Using `Clone` -derive here is fine, since `IpAddr` implements one.
+#[derive(Clone)]
 pub struct ClientIP(IpAddr);
 
 impl ClientIP {
