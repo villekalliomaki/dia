@@ -1,3 +1,6 @@
+mod mutation;
+mod query;
+
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
@@ -10,7 +13,10 @@ pub struct RefreshToken {
     modified: DateTime<Utc>,
     expires: DateTime<Utc>,
     user: Uuid,
+    /// The client's address from headers or the socket. 
     client_address: String,
+    /// Maximum valid lifetime for signed JWTs.
+    max_jwt_lifetime: usize,
 }
 
 impl RefreshToken {
@@ -32,6 +38,7 @@ mod tests {
             expires: Utc::now(),
             user: Uuid::new_v4(),
             client_address: String::new(),
+            max_jwt_lifetime: 60,
         }
     }
 
