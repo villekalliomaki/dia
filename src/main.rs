@@ -26,7 +26,7 @@ mod res;
 mod routes;
 
 use crate::{
-    access::{RateLimiter, JWT},
+    access::{create_cors, RateLimiter, JWT},
     db::{RedisConn, SqlxConn},
     gql::build_schema,
 };
@@ -43,7 +43,7 @@ async fn main() -> std::io::Result<()> {
     // Initialize logging
     logging::setup();
 
-    // Application data, database clientsmm
+    // Application data, database clients
     let conf = Config::from_file(CONF_FILE);
     let pg = SqlxConn::new(&conf).await;
     let rd = RedisConn::new(&conf);
@@ -59,6 +59,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .wrap(create_cors())
             .data(schema.clone())
             .app_data(conf.clone())
             .app_data(pg.clone())

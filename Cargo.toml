@@ -32,3 +32,4 @@ uuid = "0.8.2"
 validator = { version = "0.13", features = ["derive"] }
 openssl = "0.10"
 base64 = "0.13"
+actix-cors = "0.5.4"
