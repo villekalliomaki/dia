@@ -54,7 +54,7 @@ impl JWT {
     }
 
     /// Encode claim with the application RSA private key.
-    pub fn encode(&self, claims: &Claims) -> Result<String> {
+    pub fn encode(&self, claims: &JwtClaims) -> Result<String> {
         Ok(encode(
             &Header::new(Algorithm::RS256),
             claims,
@@ -64,7 +64,7 @@ impl JWT {
 
     /// Decode claim with the application RSA private key.
     /// Also checks expiration.
-    pub fn decode(&self, token: &str) -> Result<TokenData<Claims>> {
+    pub fn decode(&self, token: &str) -> Result<TokenData<JwtClaims>> {
         Ok(decode(
             token,
             &self.decoding,
@@ -93,19 +93,19 @@ impl FromRequest for JWT {
 /// JWT token claims that are encoded and decoded.
 /// `User` could just be `Uuid`, if the other fields are not needed.
 #[derive(Debug, Serialize, Deserialize, SimpleObject)]
-pub struct Claims {
+pub struct JwtClaims {
     pub user: User,
     pub parent_token: Uuid,
-    iat: usize,
-    exp: usize,
+    pub iat: i64,
+    pub exp: i64,
 }
 
-impl Claims {
+impl JwtClaims {
     /// Create a new claims
-    pub fn new(user: User, exp_secs: usize, parent_token: Uuid) -> Claims {
-        let now = Utc::now().timestamp() as usize;
+    pub fn new(user: User, exp_secs: i64, parent_token: Uuid) -> JwtClaims {
+        let now = Utc::now().timestamp();
 
-        Claims {
+        JwtClaims {
             user,
             parent_token,
             iat: now,
@@ -119,8 +119,8 @@ mod tests {
     use super::*;
 
     /// New `Claims` with an expiration of 5 minutes.
-    fn test_claims() -> Claims {
-        Claims::new(
+    fn test_claims() -> JwtClaims {
+        JwtClaims::new(
             User {
                 id: Uuid::new_v4(),
                 created: Utc::now(),

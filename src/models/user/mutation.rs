@@ -1,10 +1,6 @@
 use super::{regex, User};
-use crate::{
-    access::{Identifier, Limiter, RateLimiter},
-    Config,
-};
+use crate::Config;
 use async_graphql::*;
-use std::net::IpAddr;
 use tokio::task::spawn_blocking;
 use validator::Validate;
 
@@ -30,14 +26,22 @@ impl UserMutation {
             return Err(Error::new("Registerations not allowed"));
         }
 
-        ctx.data::<RateLimiter>()?
-            .run(
-                &Limiter::default(Identifier::Address(ctx.data::<IpAddr>()?.clone()))
-                    .register()
-                    .lifetime_seconds(60 * 60)
-                    .full_count(5),
-            )
-            .await?;
+        // To not interfere with tests.
+        // Rate limiting only in release builds.
+        #[cfg(not(test))]
+        {
+            use crate::access::{Identifier, Limiter, RateLimiter};
+            use std::net::IpAddr;
+
+            ctx.data::<RateLimiter>()?
+                .run(
+                    &Limiter::default(Identifier::Address(ctx.data::<IpAddr>()?.clone()))
+                        .register()
+                        .lifetime_seconds(60 * 60)
+                        .full_count(5),
+                )
+                .await?;
+        }
 
         new_user.validate()?;
 
@@ -92,7 +96,7 @@ mod tests {
     async fn create_user() {
         assert!(gql_test!(
             r#"mutation {
-                createUser(newUser: { username: "username", password: "password_of_20_characters", email: "test@email.com" }) {
+                createUser(newUser: { username: "username", password: "password_of_20_characters", email: "test_username@email.com" }) {
                   id
                 }
               }

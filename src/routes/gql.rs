@@ -1,5 +1,5 @@
 use crate::{
-    access::{ClientIP, RateLimiter, JWT},
+    access::{ClientIP, RateLimiter, UserFromJWT, JWT},
     db::{RedisConn, SqlxConn},
     gql::DiaSchema,
     Config,
@@ -15,13 +15,13 @@ use async_graphql_actix_web::{Request, Response, WSSubscription};
 pub fn build() -> Scope {
     web::scope("/gql")
         .route("", web::post().to(index))
-        .route("", web::get().to(playground))
         .route(
             "",
             web::get()
                 .guard(guard::Header("Upgrade", "websocket"))
                 .to(ws),
         )
+        .route("", web::get().to(playground))
         .route("/sdl", web::get().to(sdl))
 }
 
@@ -35,6 +35,7 @@ async fn index(
     ip: ClientIP,
     rl: RateLimiter,
     jwt: JWT,
+    user_jwt: UserFromJWT,
 ) -> Response {
     let mut request = req.into_inner();
 
@@ -46,6 +47,11 @@ async fn index(
     data.insert(cfg);
     data.insert(rl);
     data.insert(jwt);
+
+    // Convert UserFromJWT to User, since context will error out if it doesn't exist
+    if let Some(user) = user_jwt.0 {
+        data.insert(user);
+    }
 
     request.data = data;
 
@@ -63,6 +69,7 @@ async fn ws(
     ip: ClientIP,
     rl: RateLimiter,
     jwt: JWT,
+    user_jwt: UserFromJWT,
 ) -> Result<HttpResponse> {
     WSSubscription::start_with_initializer(Schema::clone(&*schema), &req, payload, |_| async {
         let mut data = Data::default();
@@ -73,6 +80,11 @@ async fn ws(
         data.insert(cfg);
         data.insert(rl);
         data.insert(jwt);
+
+        // Convert UserFromJWT to User, since context will error out if it doesn't exist
+        if let Some(user) = user_jwt.0 {
+            data.insert(user);
+        }
 
         Ok(data)
     })

@@ -1,4 +1,4 @@
-use crate::access::JWT;
+use crate::access::jwt::{JwtClaims, JWT};
 use async_graphql::*;
 
 #[derive(Default)]
@@ -20,5 +20,10 @@ impl JwtQuery {
             Ok(_) => Ok(true),
             Err(_) => Ok(false),
         }
+    }
+
+    /// Decode a signed JWT. Only if the token is usable and valid the claims are returned.
+    async fn decode_jwt(&self, ctx: &Context<'_>, jwt: String) -> Result<JwtClaims> {
+        Ok(ctx.data::<JWT>()?.decode(&jwt)?.claims)
     }
 }

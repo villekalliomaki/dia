@@ -8,9 +8,9 @@ version = "0.1.1"
 actix-rt = "2.2.0"
 actix-web = "3.3.2"
 anyhow = "1.0"
-async-graphql = { version = "2", features = ["apollo_tracing", "chrono", "uuid"] }
+async-graphql = { version="2", features=["apollo_tracing", "chrono", "uuid"] }
 async-graphql-actix-web = "2.8.5"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version="0.4", features=["serde"] }
 enum-display-derive = "0.1.1"
 env_logger = "0.8.3"
 futures = "0.3.15"
@@ -20,16 +20,17 @@ hyper = "0.14.7"
 jsonwebtoken = "8.0.0-beta.2" # Switch to the release
 lazy_static = "1.4.0"
 log = "0.4.14"
-redis = { version = "0.17.0", features = ["tokio-comp"] }
+redis = { version="0.17.0", features=["tokio-comp"] }
 regex = "1.5.4"
-serde = { version = "1.0", features = ["derive"] }
+serde = { version="1.0", features=["derive"] }
 serde_json = "1"
 sodiumoxide = "0.2.6"
-sqlx = { version = "0.4.2", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono"] }
+sqlx = { version="0.4.2", features=["runtime-tokio-rustls", "postgres", "uuid", "chrono"] }
 tokio = "0.2.25"
 toml = "0.5.8"
 uuid = "0.8.2"
-validator = { version = "0.13", features = ["derive"] }
+validator = { version="0.13", features=["derive"] }
 openssl = "0.10"
 base64 = "0.13"
 actix-cors = "0.5.4"
+rand = "0.8.4"

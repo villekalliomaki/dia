@@ -1,6 +1,9 @@
 mod mutation;
 mod query;
 
+pub use mutation::RefreshTokenMutation;
+pub use query::RefreshTokenQuery;
+
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
@@ -8,15 +11,19 @@ use uuid::Uuid;
 /// A refresh token is used to generate new JWTs.
 #[derive(SimpleObject)]
 pub struct RefreshToken {
-    id: Uuid,
-    created: DateTime<Utc>,
-    modified: DateTime<Utc>,
-    expires: DateTime<Utc>,
-    user: Uuid,
-    /// The client's address from headers or the socket. 
-    client_address: String,
+    /// Identifier used to identify a refresh token without exposing the token string.
+    pub id: Uuid,
+    /// Identifies the token when generating new JWTs.
+    /// Might be hidden in some queries.
+    pub token_string: String,
+    pub created: DateTime<Utc>,
+    pub modified: DateTime<Utc>,
+    pub expires: DateTime<Utc>,
+    pub user_id: Uuid,
+    /// The client's address from headers or the socket.
+    pub client_address: String,
     /// Maximum valid lifetime for signed JWTs.
-    max_jwt_lifetime: usize,
+    pub max_jwt_lifetime: i32,
 }
 
 impl RefreshToken {
@@ -33,10 +40,11 @@ mod tests {
     fn test_token() -> RefreshToken {
         RefreshToken {
             id: Uuid::new_v4(),
+            token_string: "token_string".into(),
             created: Utc::now(),
             modified: Utc::now(),
             expires: Utc::now(),
-            user: Uuid::new_v4(),
+            user_id: Uuid::new_v4(),
             client_address: String::new(),
             max_jwt_lifetime: 60,
         }

@@ -10,6 +10,8 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sodiumoxide::crypto::pwhash::argon2id13;
+use sqlx::PgPool;
+use tokio::task::spawn_blocking;
 use uuid::Uuid;
 
 #[derive(SimpleObject, Serialize, Deserialize, Clone, Debug)]
@@ -49,7 +51,7 @@ impl User {
     /// Tests the password against current users hash.
     /// Returns `true` on a match and `false` if the password is wrong.
     /// Usage with `spawn_blocking` is preferred.
-    pub fn validate_password<S: Into<String>>(&self, password: S) -> Result<bool> {
+    pub fn validate_password<S: Into<String>>(&self, password: S) -> Result<()> {
         sodiumoxide::init().unwrap();
 
         let mut hash_padded = [0u8; 128];
@@ -62,9 +64,37 @@ impl User {
             });
 
         match argon2id13::HashedPassword::from_slice(&hash_padded) {
-            Some(hp) => Ok(argon2id13::pwhash_verify(&hp, password.into().as_bytes())),
-            _ => bail!("Password was invalid"),
+            Some(hp) => {
+                // If password is incorrect, return an error
+                if !argon2id13::pwhash_verify(&hp, password.into().as_bytes()) {
+                    bail!("Wrong password")
+                }
+                Ok(())
+            }
+            _ => bail!("Password "),
         }
+    }
+
+    /// Find an user by their username and validate that their password is correct.
+    pub async fn from_credentials(
+        pool: &PgPool,
+        username: String,
+        password: String,
+    ) -> Result<User> {
+        // Find by username
+        let user = sqlx::query_as!(User, "SELECT * FROM users WHERE username = $1", &username)
+            .fetch_one(pool)
+            .await?;
+
+        // Validate the password is correct
+        let c = user.clone();
+        let password = password.clone();
+
+        // Send to an another thread
+        spawn_blocking(move || return c.validate_password(password)).await??;
+
+        // If there is no error, password is correct
+        Ok(user)
     }
 }
 
@@ -89,13 +119,13 @@ mod tests {
     fn user_password_valid() {
         let user = test_user();
 
-        assert_eq!(user.validate_password("a_password").unwrap(), true);
+        assert!(user.validate_password("a_password").is_ok());
     }
 
     #[test]
     fn user_password_invalid() {
         let user = test_user();
 
-        assert_eq!(user.validate_password("wrong_password").unwrap(), false);
+        assert!(user.validate_password("wrong_password").is_err());
     }
 }
