@@ -96,7 +96,9 @@ impl FromRequest for JWT {
 pub struct JwtClaims {
     pub user: User,
     pub parent_token: Uuid,
+    /// The time of issuing the token in seconds since the Epoch.
     pub iat: i64,
+    /// The exporation time in seconds since the Epoch.
     pub exp: i64,
 }
 

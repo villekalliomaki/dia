@@ -6,9 +6,7 @@ pub struct Ping;
 #[Object]
 impl Ping {
     /// Ping the GQL server.
-    async fn ping(&self, ctx: &Context<'_>) -> String {
-        let _ = ctx.data::<String>();
-
-        "pong".to_string()
+    async fn ping(&self) -> &'static str {
+        "pong"
     }
 }

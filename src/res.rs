@@ -68,7 +68,7 @@ where
             body: Body {
                 state: State::Error,
                 message: msg.into(),
-                data: None::<()>,
+                data: None,
             },
         }
     }
@@ -84,18 +84,18 @@ where
         if let Ok(value) = status.try_into() {
             self.status_code = value;
         }
-
         self
     }
 
     /// Convert self to a `HttpResponse`.
     pub fn to_response(&self) -> HttpResponse {
-        let body = serde_json::to_string(&self.body).unwrap();
-
-        HttpResponse::Ok()
-            .content_type("application/json")
-            .status(self.status_code)
-            .body(body)
+        match serde_json::to_string(&self.body) {
+            Ok(body) => HttpResponse::Ok()
+                .content_type("application/json")
+                .status(self.status_code)
+                .body(body),
+            Err(_) => HttpResponse::InternalServerError().finish(),
+        }
     }
 }
 

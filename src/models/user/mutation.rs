@@ -1,5 +1,8 @@
 use super::{regex, User};
-use crate::Config;
+use crate::{
+    gql::E,
+    Config,
+};
 use async_graphql::*;
 use tokio::task::spawn_blocking;
 use validator::Validate;
@@ -7,11 +10,17 @@ use validator::Validate;
 /// A new user with an optional email address.
 #[derive(Validate, InputObject, Clone)]
 struct NewUser {
-    #[validate(regex = "regex::USERNAME")]
+    #[validate(
+        regex(
+            path = "regex::USERNAME",
+            message = "should be 4 to 20 alphanumeric characters"
+        ),
+        length(min = 2)
+    )]
     username: String,
     #[validate(email)]
     email: Option<String>,
-    #[validate(regex = "regex::PASSWORD")]
+    #[validate(regex(path = "regex::PASSWORD", message = "should be 20 to 50 characters"))]
     password: String,
 }
 
@@ -21,9 +30,13 @@ pub struct UserMutation;
 #[Object]
 impl UserMutation {
     /// Create a new user if registerations are allowed. Rate limited to 5 tries per hour.
-    async fn create_user(&self, ctx: &Context<'_>, new_user: NewUser) -> Result<User> {
+    async fn create_user(
+        &self,
+        ctx: &Context<'_>,
+        new_user: NewUser,
+    ) -> std::result::Result<User, E> {
         if !ctx.data::<Config>()?.allow_registerations {
-            return Err(Error::new("Registerations not allowed"));
+            return Err(Error::new("Registerations not allowed"))?;
         }
 
         // To not interfere with tests.

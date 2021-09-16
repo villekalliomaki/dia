@@ -1,6 +1,6 @@
 use super::RefreshToken;
 
-use crate::models::user::User;
+use crate::{gql::E, models::user::User};
 
 use async_graphql::*;
 use chrono::{Duration, Utc};
@@ -36,7 +36,7 @@ impl RefreshTokenMutation {
         &self,
         ctx: &Context<'_>,
         new_token: NewRefreshToken,
-    ) -> Result<RefreshToken> {
+    ) -> std::result::Result<RefreshToken, E> {
         new_token.validate()?;
 
         // Find the user by the username
@@ -44,7 +44,8 @@ impl RefreshTokenMutation {
             ctx.data::<sqlx::PgPool>()?,
             new_token.username,
             new_token.password,
-        ).await?;
+        )
+        .await?;
 
         let token_string: String = rand::thread_rng()
             .sample_iter(&Alphanumeric)

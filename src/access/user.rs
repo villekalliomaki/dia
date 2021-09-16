@@ -46,7 +46,7 @@ impl FromRequest for UserFromJWT {
         // Decode claims
         let claims = match jwt.decode(header_str) {
             Ok(claims) => claims,
-            Err(error) => return err(Res::<()>::error("JWT is invalid.")),
+            Err(error) => return err(Res::<()>::error(format!("JWT is invalid: {}.", error))),
         };
 
         // Get the user data

@@ -2,9 +2,6 @@ use regex::Regex;
 
 lazy_static! {
     pub static ref USERNAME: Regex = Regex::new(r"^[A-Za-z0-9_-]{4,20}$").unwrap();
-}
-
-lazy_static! {
     pub static ref PASSWORD: Regex = Regex::new(r"^.{20,50}$").unwrap();
 }
 

@@ -2,6 +2,7 @@ use crate::{db::RedisConn, Res};
 use actix_web::{dev::Payload, FromRequest, HttpRequest};
 use anyhow::Result;
 use futures::future::{err, ok, Ready};
+use humantime::format_duration;
 use redis::{aio::Connection, AsyncCommands};
 use std::{fmt::Display, net::IpAddr, time::Duration};
 use uuid::Uuid;
@@ -85,8 +86,10 @@ impl Limiter {
                 // No requests left
 
                 bail!(
-                    "You are rate limited! Try again in {} seconds.",
-                    con.ttl::<_, u64>(&id).await?
+                    "You are rate limited! Try again in {}. (In group '{}', identified by {}).",
+                    format_duration(Duration::from_secs(con.ttl::<_, u64>(&id).await?)),
+                    self.group,
+                    self.identifier
                 )
             } else {
                 // Atleast one request left, take 1 out

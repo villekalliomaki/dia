@@ -1,6 +1,6 @@
 use super::RefreshToken;
 
-use crate::models::user::User;
+use crate::{gql::E, models::user::User};
 
 use async_graphql::*;
 
@@ -14,7 +14,7 @@ impl RefreshTokenQuery {
         &self,
         ctx: &Context<'_>,
         token_string: String,
-    ) -> Result<RefreshToken> {
+    ) -> std::result::Result<RefreshToken, E> {
         Ok(sqlx::query_as!(
             RefreshToken,
             "SELECT * FROM refresh_tokens WHERE expires > NOW() AND token_string = $1;",
@@ -31,7 +31,7 @@ impl RefreshTokenQuery {
         username: String,
         password: String,
         #[graphql(default = true)] valid: bool,
-    ) -> Result<Vec<RefreshToken>> {
+    ) -> std::result::Result<Vec<RefreshToken>, E> {
         let pool = ctx.data::<sqlx::PgPool>()?;
 
         let user = User::from_credentials(pool, username, password).await?;

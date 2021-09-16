@@ -1,6 +1,9 @@
+mod gql_result;
 mod mutation;
 mod query;
 mod subscription;
+
+pub use gql_result::{E, R};
 
 use async_graphql::{extensions::*, *};
 

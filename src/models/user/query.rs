@@ -2,6 +2,7 @@ use super::User;
 
 use crate::{
     access::{Identifier, Limiter, RateLimiter},
+    gql::E,
     Config,
 };
 
@@ -14,7 +15,12 @@ pub struct UserQuery;
 #[Object]
 impl UserQuery {
     /// Get the user with the correct credentials. Rate limited to 10 tried per hour.
-    async fn user(&self, ctx: &Context<'_>, username: String, password: String) -> Result<User> {
+    async fn user(
+        &self,
+        ctx: &Context<'_>,
+        username: String,
+        password: String,
+    ) -> std::result::Result<User, E> {
         // Limit rate to 10 per hour for every address.
         ctx.data::<RateLimiter>()?
             .run(
